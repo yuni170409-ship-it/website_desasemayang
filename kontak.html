@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontak & Masukan — Desa Sepadu</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        * {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+        body {background:linear-gradient(135deg,#eaf9ee,#d4efdc);min-height:100vh;padding:2rem;}
+        .container {max-width:800px;margin:0 auto;}
+        .header {text-align:center;margin-bottom:2rem;}
+        .header h1 {color:#1a5c34;font-size:2rem;margin-bottom:0.5rem;}
+        .header p {color:#444;}
+        .card {background:white;border-radius:16px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin-bottom:1.5rem;}
+        .card h2 {color:#1a5c34;margin-bottom:1.5rem;font-size:1.3rem;}
+        label {display:block;margin-bottom:0.5rem;font-weight:500;color:#333;}
+        input, textarea {width:100%;padding:0.8rem;border:2px solid #c8e6d0;border-radius:8px;margin-bottom:1rem;font-size:1rem;}
+        input:focus, textarea:focus {outline:none;border-color:#28a745;}
+        button {background:linear-gradient(135deg,#28a745,#208539);color:white;border:none;padding:0.9rem 2rem;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;width:100%;transition:transform 0.2s;}
+        button:hover {transform:scale(1.02);}
+        .info-item {padding:1rem 0;border-bottom:1px solid #eee;}
+        .info-item:last-child {border-bottom:none;}
+        .info-item h4 {color:#1a5c34;margin-bottom:0.3rem;}
+        .btn-kembali {display:inline-block;background:#6c757d;color:white;padding:0.7rem 1.5rem;border-radius:8px;text-decoration:none;margin-bottom:1.5rem;}
+        .alert {padding:1rem;border-radius:8px;margin-top:1rem;display:none;}
+        .alert.sukses {background:#d4edda;color:#155724;display:block;}
+        .alert.error {background:#f8d7da;color:#721c24;display:block;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="btn-kembali">← Kembali ke Beranda</a>
+        
+        <div class="header">
+            <h1>📞 Hubungi Kami</h1>
+            <p>Silakan sampaikan saran, kritik, atau pertanyaan Anda untuk Desa Sepadu</p>
+        </div>
+
+        <div class="card">
+            <h2>📍 Informasi Kontak</h2>
+            <div class="info-item">
+                <h4>Alamat</h4>
+                <p>Dusun Semayang, Kecamatan Semparuk, Kabupaten Sambas, Kalimantan Barat</p>
+            </div>
+            <div class="info-item">
+                <h4>Email</h4>
+                <p>desasepadu@gmail.com</p>
+            </div>
+            <div class="info-item">
+                <h4>Telepon / WhatsApp</h4>
+                <p>+62 812-xxxx-xxxx</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>✍️ Kirim Masukan</h2>
+            <form id="formMasukan">
+                <label>Nama Lengkap *</label>
+                <input type="text" id="nama" required placeholder="Masukkan nama Anda">
+
+                <label>Email *</label>
+                <input type="email" id="email" required placeholder="email@contoh.com">
+
+                <label>Nomor HP</label>
+                <input type="tel" id="hp" placeholder="08xx-xxxx-xxxx">
+
+                <label>Pesan / Masukan *</label>
+                <textarea id="pesan" rows="5" required placeholder="Tuliskan saran, kritik, atau pertanyaan Anda..."></textarea>
+
+                <button type="submit">📤 Kirim Masukan</button>
+                
+                <div id="pesanAlert" class="alert"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // === GANTI URL INI DENGAN URL APPS SCRIPT KAMU ===
+        const API_URL = "https://script.google.com/macros/s/AKfyzbxxxxxx/exec";
+        // =================================================
+
+        const form = document.getElementById('formMasukan');
+        const alertBox = document.getElementById('pesanAlert');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            alertBox.style.display = 'none';
+
+            const data = new URLSearchParams();
+            data.append('action', 'kirim');
+            data.append('nama', document.getElementById('nama').value);
+            data.append('email', document.getElementById('email').value);
+            data.append('hp', document.getElementById('hp').value);
+            data.append('pesan', document.getElementById('pesan').value);
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: data
+                });
+                const hasil = await res.json();
+                
+                alertBox.className = 'alert sukses';
+                alertBox.textContent = '✅ Masukan berhasil dikirim! Terima kasih atas partisipasi Anda.';
+                form.reset();
+            } catch(err) {
+                alertBox.className = 'alert error';
+                alertBox.textContent = '❌ Gagal mengirim. Silakan coba lagi.';
+            }
+        });
+    </script>
+</body>
+</html>

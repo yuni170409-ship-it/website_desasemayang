@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Masukan Masyarakat Desa Sepadu</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        * {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+        body {background:#f1f3f4;padding:1rem;}
+        .container {max-width:1000px;margin:0 auto;}
+        .login-box {max-width:400px;margin:5rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+        .login-box h2 {text-align:center;color:#1a5c34;margin-bottom:1.5rem;}
+        input {width:100%;padding:0.8rem;border:1px solid #ddd;border-radius:8px;margin-bottom:1rem;font-size:1rem;}
+        button {background:#1a5c34;color:white;border:none;padding:0.8rem 2rem;border-radius:8px;font-size:1rem;cursor:pointer;width:100%;}
+        .page-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+        .page-header h1 {color:#1a5c34;font-size:1.6rem;}
+        .stat-box {display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+        .stat {padding:1rem 1.5rem;border-radius:8px;color:white;font-weight:600;}
+        .stat.belum {background:#ffc107;color:#212529;}
+        .stat.sudah {background:#28a745;}
+        table {width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
+        th, td {padding:0.9rem 1rem;text-align:left;border-bottom:1px solid #eee;font-size:0.9rem;}
+        th {background:#1a5c34;color:white;}
+        .badge {padding:0.3rem 0.7rem;border-radius:20px;font-size:0.8rem;font-weight:600;}
+        .badge.belum {background:#fff3cd;color:#856404;}
+        .badge.sudah {background:#d4edda;color:#155724;}
+        .btn {padding:0.5rem 1rem;border-radius:6px;border:none;cursor:pointer;font-size:0.85rem;text-decoration:none;display:inline-block;}
+        .btn.primary {background:#007bff;color:white;}
+        .btn.secondary {background:#6c757d;color:white;}
+        .modal {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000;}
+        .modal.buka {display:flex;}
+        .modal-content {background:white;padding:2rem;border-radius:12px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;}
+        textarea {width:100%;padding:0.8rem;border:1px solid #ddd;border-radius:6px;margin:1rem 0;min-height:120px;}
+        .hidden {display:none !important;}
+        .btn-keluar {background:#dc3545;color:white;}
+        tr:hover {background:#f8f9fa;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HALAMAN LOGIN -->
+        <div id="halamanLogin" class="login-box">
+            <h2>🔐 Admin Masukan</h2>
+            <input type="password" id="kataSandi" placeholder="Masukkan kata sandi admin">
+            <button onclick="login()">Masuk</button>
+        </div>
+
+        <!-- HALAMAN UTAMA ADMIN -->
+        <div id="halamanAdmin" class="hidden">
+            <div class="page-header">
+                <h1>📋 Masukan Masyarakat Desa Sepadu</h1>
+                <button class="btn btn-keluar" onclick="keluar()">Keluar</button>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat belum" id="jmlBelum">⏳ Belum Direspon: 0</div>
+                <div class="stat sudah" id="jmlSudah">✅ Sudah Direspon: 0</div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Pesan</th>
+                        <th>Tanggal</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelBody">
+                    <tr><td colspan="6" style="text-align:center;padding:2rem;">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL BALAS -->
+    <div id="modalBalas" class="modal">
+        <div class="modal-content">
+            <h3 id="modalNama">Balas Masukan</h3>
+            <hr>
+            <p><strong>Pesan:</strong></p>
+            <p id="modalPesan" style="background:#f8f9fa;padding:1rem;border-radius:6px;"></p>
+            
+            <label><strong>Tulis Respon Anda:</strong></label>
+            <textarea id="inputRespon" placeholder="Tuliskan jawaban untuk pengirim..."></textarea>
+            
+            <div style="text-align:right;gap:0.5rem;display:flex;justify-content:flex-wrap;">
+                <button class="btn secondary" onclick="tutupModal()">Batal</button>
+                <button class="btn primary" onclick="simpanRespon()">💾 Simpan Respon</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === PENGATURAN ===
+        const KATA_SANDI_ADMIN = "desa123"; // 🔐 Ganti dengan kata sandi kamu sendiri!
+        const API_URL = "https://script.google.com/macros/s/AKfyzbxxxxxx/exec"; // Ganti URL ini!
+        // ==================
+
+        let semuaData = [];
+        let barisAktif = null;
+
+        // Login
+        function login() {
+            const sandi = document.getElementById('kataSandi').value;
+            if (sandi === KATA_SANDI_ADMIN) {
+                document.getElementById('halamanLogin').classList.add('hidden');
+                document.getElementById('halamanAdmin').classList.remove('hidden');
+                muatData();
+            } else {
+                alert('❌ Kata sandi salah!');
+            }
+        }
+
+        // Keluar
+        function keluar() {
+            document.getElementById('halamanLogin').classList.remove('hidden');
+            document.getElementById('halamanAdmin').classList.add('hidden');
+            document.getElementById('kataSandi').value = '';
+        }
+
+        // Muat data dari Google Sheets
+        async function muatData() {
+            try {
+                const res = await fetch(API_URL + '?action=ambil');
+                semuaData = await res.json();
+                tampilkanData();
+            } catch(err) {
+                document.getElementById('tabelBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">❌ Gagal memuat data. Cek URL API.</td></tr>';
+            }
+        }
+
+        // Tampilkan ke tabel
+        function tampilkanData() {
+            const tbody = document.getElementById('tabelBody');
+            let html = '';
+            let belum = 0, sudah = 0;
+
+            semuaData.forEach((d, i) => {
+                if (d.status === 'Belum Direspon') belum++;
+                else sudah++;
+
+                const potongPesan = d.pesan.length > 35 ? d.pesan.substring(0,35) + '...' : d.pesan;
+                const tgl = new Date(d.tanggal).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'});
+                
+                html += `
+                <tr>
+                    <td>${i+1}</td>
+                    <td><strong>${d.nama}</strong><br><small>${d.email || ''}</small></td>
+                    <td>${potongPesan}</td>
+                    <td>${tgl}</td>
+                    <td><span class="badge ${d.status === 'Belum Direspon' ? 'belum' : 'sudah'}">${d.status}</span></td>
+                    <td><button class="btn primary" onclick="bukaBalas(${i})">${d.status === 'Belum Direspon' ? '✍️ Balas' : '👁️ Lihat'}</button></td>
+                </tr>`;
+            });
+
+            tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;">Belum ada masukan</td></tr>';
+            document.getElementById('jmlBelum').textContent = '⏳ Belum Direspon: ' + belum;
+            document.getElementById('jmlSudah').textContent = '✅ Sudah Direspon: ' + sudah;
+        }
+
+        // Buka modal balas
+        function bukaBalas(index) {
+            barisAktif = index;
+            const d = semuaData[index];
+            document.getElementById('modalNama').textContent = 'Masukan dari: ' + d.nama;
+            document.getElementById('modalPesan').textContent = d.pesan;
+            document.getElementById('inputRespon').value = d.respon || '';
+            document.getElementById('modalBalas').classList.add('buka');
+        }
+
+        // Tutup modal
+        function tutupModal() {
+            document.getElementById('modalBalas').classList.remove('buka');
+            barisAktif = null;
+        }
+
+        // Simpan respon ke Google Sheets
+        async function simpanRespon() {
+            const respon = document.getElementById('inputRespon').value.trim();
+            if (!respon) { alert('Isi respon terlebih dahulu!'); return; }
+
+            const d = semuaData[barisAktif];
+            const data = new URLSearchParams();
+            data.append('action', 'balas');
+            data.append('baris', d.baris);
+            data.append('respon', respon);
+
+            try {
+                await fetch(API_URL, { method: 'POST', body: data });
+                semuaData[barisAktif].status = 'Sudah Direspon';
+                semuaData[barisAktif].respon = respon;
+                tampilkanData();
+                tutupModal();
+                alert('✅ Respon disimpan!');
+            } catch(err) {
+                alert('❌ Gagal menyimpan. Coba lagi.');
+            }
+        }
+    </script>
+</body>
+</html>
